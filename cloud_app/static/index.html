@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="hy">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cardio Vita Clinic</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <section id="login" class="login">
+      <form id="loginForm" class="login-card">
+        <h1>Cardio Vita</h1>
+        <p>Կլինիկայի ընդհանուր գրանցամատյան</p>
+        <label>Օգտանուն <input name="username" required autocomplete="username"></label>
+        <label>Գաղտնաբառ <input name="password" required type="password" autocomplete="current-password"></label>
+        <button type="submit">Մուտք</button>
+        <small id="loginError"></small>
+      </form>
+    </section>
+
+    <main id="app" class="app hidden">
+      <header class="topbar">
+        <div>
+          <h1>Cardio Vita</h1>
+          <span id="userLabel"></span>
+        </div>
+        <button id="logoutButton" type="button">Ելք</button>
+      </header>
+
+      <nav class="tabs">
+        <button data-tab="dashboard" class="admin-only">Վահանակ</button>
+        <button data-tab="patients" class="active staff-flow">Պացիենտներ</button>
+        <button data-tab="appointments" class="staff-flow">Ժամադրություններ</button>
+        <button data-tab="calendar" class="staff-flow">Օրացույց</button>
+        <button data-tab="services" class="staff-flow">Ծառայություններ</button>
+        <button data-tab="holter" class="staff-flow">Հոլտեր</button>
+        <button data-tab="doctorWorkspace" class="doctor-only">Բժշկի էջ</button>
+        <button data-tab="patientOverview" class="admin-only">Պացիենտի պատմություն</button>
+        <button data-tab="summary" class="staff-flow">Ամփոփում</button>
+        <button data-tab="users" id="usersTab" class="admin-only">Օգտատերեր</button>
+      </nav>
+
+      <section class="page dashboard-page admin-only" id="dashboard">
+        <div class="dashboard-head">
+          <div>
+            <h2>Վահանակ</h2>
+            <span id="dashboardDate"></span>
+          </div>
+          <button id="refreshDashboard" type="button">Թարմացնել</button>
+        </div>
+        <div id="dashboardMetrics" class="metric-grid"></div>
+        <div class="dashboard-grid">
+          <section class="panel"><h2>Մասնաճյուղեր</h2><div id="branchMetrics"></div></section>
+          <section class="panel"><h2>Ժամադրությունների կարգավիճակ</h2><div id="statusMetrics"></div></section>
+          <section class="panel"><h2>Բժիշկների ծանրաբեռնվածություն</h2><div id="doctorMetrics"></div></section>
+          <section class="panel"><h2>Ծառայությունների եկամուտ</h2><div id="serviceMetrics"></div></section>
+          <section class="panel"><h2>Հոլտերի վերադարձներ</h2><div id="holterMetrics"></div></section>
+          <section class="panel"><h2>Վերջին ժամադրություններ</h2><div id="recentAppointments"></div></section>
+        </div>
+      </section>
+
+      <section class="page active" id="patients">
+        <form id="patientForm" class="panel grid">
+          <h2>Նոր պացիենտ</h2>
+          <input name="anketa_number" placeholder="Անկետա #" required>
+          <small id="patientAnketaHint" class="field-hint">Անկետա համարը լրացվում է ավտոմատ։</small>
+          <input name="visit_date" type="date" required>
+          <select name="branch" required><option>Տերյան</option><option>Նարեկացի</option></select>
+          <input name="first_name" placeholder="Անուն" required>
+          <input name="last_name" placeholder="Ազգանուն" required>
+          <input name="father_name" placeholder="Հայրանուն">
+          <input name="birth_date" type="date">
+          <input name="passport" placeholder="Անձնագիր">
+          <input name="phone" inputmode="numeric" pattern="[0-9+ ]*" placeholder="Հեռախոս">
+          <input name="email" type="email" placeholder="Էլ․ փոստ">
+          <select name="status"><option>Նոր</option><option>Կատարված</option><option>Չեղարկված</option></select>
+          <select name="payment"><option></option><option>Վճարված</option><option>Չվճարված</option></select>
+          <textarea name="notes" placeholder="Նշումներ"></textarea>
+          <button type="submit">Պահպանել</button>
+        </form>
+        <div class="panel"><h2>Պացիենտների ցանկ</h2><div id="patientsTable"></div></div>
+      </section>
+
+      <section class="page" id="appointments">
+        <form id="appointmentForm" class="panel grid">
+          <h2>Նոր ժամադրություն</h2>
+          <input name="appointment_date" type="date" required>
+          <input name="appointment_time" id="appointmentTime" type="time" step="600" required>
+          <select name="branch" required><option>Տերյան</option><option>Նարեկացի</option></select>
+          <div class="doctor-picker" id="appointmentDoctors"></div>
+          <button id="addAppointmentDoctor" type="button" class="secondary-button">Ավելացնել բժիշկ</button>
+          <input id="appointmentPatientSearch" type="search" placeholder="Որոնել պացիենտ՝ անուն, ազգանուն, անձնագիր, հեռախոս">
+          <div id="appointmentPatientResults" class="patient-results compact-results"></div>
+          <input name="anketa_number" placeholder="Անկետա #">
+          <small id="appointmentPatientHint" class="field-hint"></small>
+          <input name="patient_name" placeholder="Պացիենտ">
+          <input name="passport" placeholder="Անձնագիր">
+          <input name="phone" inputmode="numeric" pattern="[0-9+ ]*" placeholder="Հեռախոս">
+          <select name="status"><option>Նշանակված</option><option>Եկել է</option><option>Չեղարկված</option><option>Չի եկել</option></select>
+          <textarea name="notes" placeholder="Նշումներ"></textarea>
+          <button type="submit">Գրանցել</button>
+        </form>
+        <div class="panel"><h2>Ժամադրություններ</h2><div id="appointmentsTable"></div></div>
+      </section>
+
+      <section class="page calendar-page" id="calendar">
+        <div class="calendar-shell">
+          <div class="calendar-toolbar">
+            <div>
+              <h2>Օրացույց</h2>
+              <span id="calendarRange"></span>
+            </div>
+            <div class="week-actions">
+              <button id="prevWeek" type="button">Նախորդ</button>
+              <button id="todayWeek" type="button">Այսօր</button>
+              <button id="nextWeek" type="button">Հաջորդ</button>
+            </div>
+          </div>
+          <div class="calendar-filters">
+            <label>Շաբաթ <input id="calendarWeek" type="date"></label>
+            <label>Մասնաճյուղ <select id="calendarBranch"><option>Տերյան</option><option>Նարեկացի</option></select></label>
+            <label>Բժիշկ <select id="calendarDoctor"></select></label>
+            <button id="refreshCalendar" type="button">Թարմացնել</button>
+          </div>
+          <div class="calendar-meta">
+            <span><b class="dot free-dot"></b>Ազատ</span>
+            <span><b class="dot busy-dot"></b>Զբաղված</span>
+            <span><b class="dot closed-dot"></b>Փակ</span>
+          </div>
+          <div id="calendarStats" class="calendar-stats"></div>
+          <div class="calendar-board"><div id="calendarGrid"></div></div>
+        </div>
+      </section>
+
+      <section class="page" id="services">
+        <form id="serviceForm" class="panel grid">
+          <h2>Ծառայություններ</h2>
+          <input name="anketa_number" placeholder="Անկետա #" required>
+          <select name="kind"><option value="general">Ընդհանուր</option><option value="lab">Լաբորատոր</option></select>
+          <select name="branch"><option>Տերյան</option><option>Նարեկացի</option></select>
+          <select id="serviceActiveDoctor" required></select>
+          <select name="status"><option>Նոր</option><option>Կատարված</option><option>Տրված</option></select>
+          <div class="service-picker">
+            <div class="service-picker-head">
+              <input id="serviceSearch" type="search" placeholder="Որոնել ծառայություն">
+              <span id="servicePickCount">0 ընտրված</span>
+            </div>
+            <div id="serviceOptions" class="service-options"></div>
+          </div>
+          <div id="selectedServices" class="selected-services"></div>
+          <div class="service-actions">
+            <button id="clearSelectedServices" type="button" class="secondary-button">Մաքրել ընտրածները</button>
+            <strong id="serviceTotal">Ընդամենը՝ 0 դր</strong>
+          </div>
+          <textarea name="notes" placeholder="Նշումներ"></textarea>
+          <button type="submit">Պահպանել</button>
+        </form>
+        <div class="panel"><h2>Ծառայություններ</h2><div id="servicesTable"></div></div>
+      </section>
+
+      <section class="page" id="holter">
+        <form id="holterForm" class="panel grid">
+          <h2>Հոլտերի տրամադրում</h2>
+          <input name="anketa_number" placeholder="Անկետա #" required>
+          <small id="holterPatientHint" class="field-hint"></small>
+          <input name="patient_name" placeholder="Անուն Ազգանուն">
+          <input name="phone" inputmode="numeric" pattern="[0-9+ ]*" placeholder="Հեռախոս">
+          <select name="branch" required><option>Տերյան</option><option>Նարեկացի</option></select>
+          <input name="provided_date" type="date" required>
+          <input name="provided_time" type="time" required>
+          <select name="duration_hours"><option>24</option><option>48</option><option>72</option></select>
+          <select name="provided_status"><option>Տրված</option><option>Պատրաստ է</option><option>Չի տրվել</option></select>
+          <select name="return_status"><option>Սպասվում է</option><option>Վերադարձված</option><option>Ուշացած</option></select>
+          <select name="actual_return"><option></option><option>Այո</option><option>Ոչ</option></select>
+          <textarea name="notes" placeholder="Նշումներ"></textarea>
+          <button type="submit">Պահպանել</button>
+        </form>
+        <div class="panel"><h2>Հոլտերներ</h2><div id="holtersTable"></div></div>
+      </section>
+
+      <section class="page" id="summary">
+        <div class="panel"><h2>Ամփոփում</h2><div id="summaryBox"></div><button id="exportButton" class="admin-only" type="button">JSON պահուստ</button></div>
+      </section>
+
+      <section class="page admin-only" id="patientOverview">
+        <div class="panel patient-search-panel">
+          <h2>Պացիենտի պատմություն</h2>
+          <div class="patient-search">
+            <input id="patientSearchInput" type="search" placeholder="Որոնել՝ անկետա, անուն, ազգանուն, հեռախոս, անձնագիր">
+            <select id="patientReportDateType">
+              <option value="visit">Այցի ամսաթիվ</option>
+              <option value="registration">Գրանցման ամսաթիվ</option>
+              <option value="service">Ծառայության ամսաթիվ</option>
+            </select>
+            <input id="patientReportFrom" type="date">
+            <input id="patientReportTo" type="date">
+            <select id="patientReportType">
+              <option value="all">Բոլորը</option>
+              <option value="new">Նոր պացիենտներ</option>
+              <option value="existing">Հին՝ ծառայություններով</option>
+            </select>
+            <button id="patientSearchButton" type="button">Որոնել</button>
+          </div>
+          <div id="patientSearchResults" class="patient-results"></div>
+        </div>
+        <div class="panel patient-profile-panel">
+          <h2>Տվյալներ</h2>
+          <div id="patientProfileBox" class="patient-profile-box"><p>Որոնեք և ընտրեք պացիենտին։</p></div>
+        </div>
+      </section>
+
+      <section class="page doctor-only" id="doctorWorkspace">
+        <div class="panel patient-search-panel">
+          <h2>Բժշկի պացիենտներ</h2>
+          <div class="patient-search">
+            <input id="doctorPatientSearch" type="search" placeholder="Որոնել՝ անկետա, անուն, հեռախոս, անձնագիր">
+            <button id="doctorPatientSearchButton" type="button">Որոնել</button>
+          </div>
+          <div id="doctorPatientResults" class="patient-results"></div>
+        </div>
+        <form id="doctorNoteForm" class="panel grid">
+          <h2>Բժշկի փաստաթուղթ</h2>
+          <input name="anketa_number" placeholder="Ընտրեք պացիենտ" readonly required>
+          <small id="doctorNotePatient" class="field-hint"></small>
+          <div id="doctorHolterHistory" class="doctor-notes-history"></div>
+          <select name="note_type" id="doctorNoteType" required>
+            <option>Ախտորոշում</option>
+            <option>Էխոսրտագրության պատասխան</option>
+            <option>Հոլտերի եզրակացություն</option>
+            <option>Ֆիզիկական ծանրաբեռնվածության թեստի պատասխան</option>
+          </select>
+          <textarea name="complaints" placeholder="Գանգատներ"></textarea>
+          <textarea name="diagnosis" placeholder="Ախտորոշում" required></textarea>
+          <textarea name="prescription" placeholder="Նշանակում / դեղատոմս"></textarea>
+          <textarea name="notes" placeholder="Լրացուցիչ նշումներ"></textarea>
+          <button type="submit">Պահպանել</button>
+          <div id="doctorNotesHistory" class="doctor-notes-history"></div>
+        </form>
+      </section>
+
+      <section class="page" id="users">
+        <form id="userForm" class="panel grid">
+          <h2>Նոր օգտատեր</h2>
+          <input name="username" placeholder="Օգտանուն" required>
+          <input name="password" type="password" minlength="8" placeholder="Գաղտնաբառ" required>
+          <select name="role" id="userRole"><option value="staff">Աշխատակից</option><option value="doctor">Բժիշկ</option><option value="admin">Ադմին</option></select>
+          <select name="branch"><option>Տերյան</option><option>Նարեկացի</option></select>
+          <select name="doctor_name" id="userDoctorName"></select>
+          <div id="userDoctorInfo" class="doctor-info hidden"></div>
+          <button type="submit">Ստեղծել</button>
+        </form>
+        <div class="panel"><h2>Օգտատերերի ցանկ</h2><div id="usersTable"></div></div>
+      </section>
+    </main>
+    <div id="quickBookingModal" class="modal hidden" role="dialog" aria-modal="true">
+      <form id="quickBookingForm" class="modal-card">
+        <div class="modal-head">
+          <div>
+            <h2>Արագ ժամադրում</h2>
+            <span id="quickBookingSlot"></span>
+          </div>
+          <button id="closeQuickBooking" type="button" class="secondary-button">Փակել</button>
+        </div>
+        <input name="appointment_date" type="hidden">
+        <input name="appointment_time" type="hidden">
+        <input name="branch" type="hidden">
+        <input name="doctor" type="hidden">
+        <div class="grid">
+          <input name="anketa_number" placeholder="Անկետա #">
+          <small id="quickBookingHint" class="field-hint"></small>
+          <input name="patient_name" placeholder="Պացիենտ / զանգահարող" required>
+          <input name="passport" placeholder="Անձնագիր">
+          <input name="phone" inputmode="numeric" pattern="[0-9+ ]*" placeholder="Հեռախոս">
+          <select name="status"><option>Նշանակված</option><option>Եկել է</option><option>Չեղարկված</option><option>Չի եկել</option></select>
+          <textarea name="notes" placeholder="Նշումներ">Արագ ժամադրում հեռախոսազանգից</textarea>
+          <button type="submit">Պահպանել ժամադրությունը</button>
+        </div>
+      </form>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script src="/service_catalog.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

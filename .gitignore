@@ -1,0 +1,15 @@
+.DS_Store
+*.pyc
+__pycache__/
+
+# Local clinic data and generated backups should not be committed.
+cloud_app/data/
+cloud_app/backups/
+
+# Local secrets.
+cloud_app/.env
+.env
+
+# Editor/system noise.
+.vscode/
+.idea/
