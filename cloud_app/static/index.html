@@ -31,7 +31,7 @@
         <button data-tab="dashboard" class="admin-only">Վահանակ</button>
         <button data-tab="patients" class="active staff-flow">Պացիենտներ</button>
         <button data-tab="appointments" class="staff-flow">Ժամադրություններ</button>
-        <button data-tab="calendar" class="staff-flow">Օրացույց</button>
+        <button data-tab="calendar">Օրացույց</button>
         <button data-tab="services" class="staff-flow">Ծառայություններ</button>
         <button data-tab="holter" class="staff-flow">Հոլտեր</button>
         <button data-tab="doctorWorkspace" class="doctor-only">Բժշկի էջ</button>
@@ -122,6 +122,7 @@
             <label>Բժիշկ <select id="calendarDoctor"></select></label>
             <button id="refreshCalendar" type="button">Թարմացնել</button>
           </div>
+          <div id="calendarRoleNote" class="calendar-role-note hidden"></div>
           <div class="calendar-meta">
             <span><b class="dot free-dot"></b>Ազատ</span>
             <span><b class="dot busy-dot"></b>Զբաղված</span>

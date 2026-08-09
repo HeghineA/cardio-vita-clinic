@@ -1624,8 +1624,16 @@ class ClinicHandler(SimpleHTTPRequestHandler):
         self.send_json({"ok": True, "ids": ids, "count": len(ids)}, 201)
 
     def calendar(self, user, query):
-        branch = self.scoped_branch(user, query.get("branch", [""])[0]) or "Տերյան"
-        doctor = query.get("doctor", [""])[0]
+        requested_branch = query.get("branch", [""])[0]
+        if user["role"] == "doctor":
+            branch = requested_branch if requested_branch in BRANCHES else "Տերյան"
+            doctor = self.doctor_name_for_user(user)
+        else:
+            branch = self.scoped_branch(user, requested_branch) or "Տերյան"
+            doctor = query.get("doctor", [""])[0]
+        if not doctor:
+            self.error("Ընտրեք բժիշկ։")
+            return
         try:
             start = parse_date(query.get("week", [date.today().isoformat()])[0])
         except ValueError as exc:

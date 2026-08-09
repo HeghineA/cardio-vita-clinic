@@ -268,6 +268,24 @@ function applyBranchAccess() {
   });
 }
 
+function applyCalendarAccess() {
+  const doctorSelect = $("#calendarDoctor");
+  const note = $("#calendarRoleNote");
+  if (!doctorSelect || !state.user) return;
+  if (state.user.role === "doctor") {
+    const doctorName = state.user.doctor_name || state.user.username;
+    doctorSelect.innerHTML = `<option>${doctorName}</option>`;
+    doctorSelect.value = doctorName;
+    doctorSelect.disabled = true;
+    note.textContent = "Ձեզ ցուցադրվում են միայն Ձեր գրանցված պացիենտները։ Մասնաճյուղը կարող եք փոխել։";
+    note.classList.remove("hidden");
+    return;
+  }
+  doctorSelect.disabled = false;
+  note.textContent = "";
+  note.classList.add("hidden");
+}
+
 async function fillNextPatientAnketa(force = false) {
   const form = $("#patientForm");
   if (!form || state.user?.role === "doctor") return;
@@ -373,6 +391,7 @@ function closeQuickBooking() {
 async function loadDoctors() {
   state.doctors = await api("/api/doctors");
   $("#calendarDoctor").innerHTML = state.doctors.map(d => `<option>${d.name}</option>`).join("");
+  applyCalendarAccess();
   $("#serviceActiveDoctor").innerHTML = serviceDoctorOptions();
   $("#userDoctorName").innerHTML = `<option value="">Բժիշկ</option>${state.doctors.map(d => `<option>${d.name}</option>`).join("")}`;
   updateUserRoleFields();
@@ -676,6 +695,7 @@ async function loadDashboard() {
 }
 
 async function loadCalendar() {
+  applyCalendarAccess();
   const branch = encodeURIComponent($("#calendarBranch").value);
   const doctor = encodeURIComponent($("#calendarDoctor").value);
   const weekStart = monday($("#calendarWeek").value || today());
@@ -700,7 +720,7 @@ async function loadCalendar() {
     data.slots.map(slot => `<tr><th>${slot.time}</th>${slot.days.map(day => {
       const cls = day.status === "Փակ" ? "closed" : day.status === "Զբաղված" ? "busy" : "free";
       const appointmentTitle = day.appointment?.patient_name || day.appointment?.anketa_number || "Ժամադրություն";
-      const text = day.appointment ? `<strong>${appointmentTitle}</strong><span>${day.appointment.branch} · ${day.appointment.status}</span>` : `<strong>${day.status}</strong>`;
+      const text = day.appointment ? `<strong>${appointmentTitle}</strong><span>${day.appointment.branch} · ${day.appointment.status}</span><small>${day.appointment.phone || day.appointment.anketa_number || ""}</small>` : `<strong>${day.status}</strong>`;
       return `<td class="${cls} ${day.date === today() ? "today-col" : ""}" data-date="${day.date}" data-time="${slot.time}" data-status="${day.status}">${text}</td>`;
     }).join("")}</tr>`).join("")
   }</tbody></table>`;
@@ -733,6 +753,8 @@ async function init() {
   if (me.user.role === "doctor") {
     activateTab("doctorWorkspace");
     await searchDoctorPatients();
+    $("#calendarWeek").value = monday(today());
+    await loadCalendar();
     return;
   }
   activateTab(me.user.role === "admin" ? "dashboard" : "patients");
@@ -855,8 +877,10 @@ $("#serviceForm").addEventListener("submit", async (event) => {
 });
 
 document.body.addEventListener("click", async (event) => {
-  if (event.target.matches("#calendarGrid td.free")) {
-    openQuickBooking(event.target.dataset.date, event.target.dataset.time);
+  const freeCalendarCell = event.target.closest("#calendarGrid td.free");
+  if (freeCalendarCell) {
+    if (state.user?.role === "doctor") return;
+    openQuickBooking(freeCalendarCell.dataset.date, freeCalendarCell.dataset.time);
     return;
   }
   if (event.target.matches("[data-unselect-service]")) {

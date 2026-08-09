@@ -114,6 +114,8 @@ textarea { min-height: 76px; resize: vertical; }
 .week-actions button { background: #e9f2f5; color: #17343d; }
 .week-actions button:nth-child(2) { background: #176b87; color: #fff; }
 .calendar-filters { display: grid; grid-template-columns: 180px 190px 260px auto; gap: 12px; align-items: end; padding: 16px 18px; background: #f8fbfc; border-bottom: 1px solid #d8e4e8; }
+.calendar-filters select:disabled { color: #17343d; background: #e9f2f5; opacity: 1; }
+.calendar-role-note { margin: 12px 18px 0; padding: 10px 12px; border: 1px solid #d8e4e8; border-left: 4px solid #176b87; border-radius: 8px; background: #f8fbfc; color: #607780; }
 .calendar-meta { display: flex; gap: 18px; align-items: center; padding: 12px 18px 0; color: #607780; }
 .calendar-meta span { display: inline-flex; gap: 7px; align-items: center; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -136,6 +138,7 @@ th, td { border: 1px solid #d8e4e8; padding: 9px; vertical-align: top; }
 .calendar-table tbody th { position: sticky; left: 0; z-index: 1; width: 84px; text-align: center; background: #f4f9fb; color: #17343d; font-weight: 700; }
 .calendar-table th, .calendar-table td { height: 46px; padding: 7px 8px; }
 .calendar-table thead span, .calendar-table td span { display: block; font-size: 12px; font-weight: 400; opacity: .78; margin-top: 2px; }
+.calendar-table td small { display: block; margin-top: 2px; color: inherit; opacity: .72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-table td { font-size: 13px; line-height: 1.2; }
 .calendar-table td strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .calendar-table td.free { cursor: pointer; color: #177245; background: #f2fbf5; text-align: center; font-weight: 700; }
