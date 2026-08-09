@@ -33,7 +33,9 @@ INSERT INTO doctors (name, specialty, active) VALUES
   ('Մելինա Խաչատրյան', 'Նյարդաբան', 1),
   ('Լյուբա Արզումանյան', 'Ճառագայթային ախտորոշման մասնագետ', 1),
   ('Բակուր Վարդանյան', 'Սրտաբան', 1),
-  ('Արմեն Շահբազյան', 'Սրտաբան', 1)
+  ('Արմեն Շահբազյան', 'Սրտաբան', 1),
+  ('Մակարյան Գայանե', 'Ռևմատոլոգ', 1),
+  ('Ասլիկյան Աննա', 'Բժիշկ-լաբորանտ', 1)
 ON CONFLICT (name) DO UPDATE SET
   specialty = EXCLUDED.specialty,
   active = EXCLUDED.active;
@@ -47,11 +49,12 @@ INSERT INTO users (username, password_hash, role, branch, doctor_name, active, c
   ('melina.khachatryan', 'h6VNT1JYd92T5w9Ir/L3IfKSsfw3LWqHd1IBueW3oySRCTED6JaLVy8+SnVpZKYj', 'doctor', NULL, 'Մելինա Խաչատրյան', 1, NOW()::text),
   ('lyuba.arzumanyan', 'qVnRqAah8zBucQ2AHs0EBwjjn+scofR5iHXnrI8q4Q0S2+MOWbkE9tbQsdDtWVsJ', 'doctor', NULL, 'Լյուբա Արզումանյան', 1, NOW()::text),
   ('bakur.vardanyan', '7J7kDhMN/a4xKAr+GZXL7YriGYGSemUQSe5Jj7jjJcEJrDknK6KyvEs8jJXoWyqF', 'doctor', NULL, 'Բակուր Վարդանյան', 1, NOW()::text),
-  ('armen.shahbazyan', 'qKKj3j7lDRlFxT1m3KOUG1rv5flkm45ryYaYR3d0EPfA6qsjnzaCbi5v9SXXZuG/', 'doctor', NULL, 'Արմեն Շահբազյան', 1, NOW()::text)
+  ('armen.shahbazyan', 'qKKj3j7lDRlFxT1m3KOUG1rv5flkm45ryYaYR3d0EPfA6qsjnzaCbi5v9SXXZuG/', 'doctor', NULL, 'Արմեն Շահբազյան', 1, NOW()::text),
+  ('gayane.makaryan', 'divAQqQOZi8f/+LB/cRfw5PEF9koFqtXGyFY1DWBvsX2jPXLffRwIStvKsY3BfLK', 'doctor', NULL, 'Մակարյան Գայանե', 1, NOW()::text),
+  ('anna.aslikyan', 'xpsnrKjdGz0Q17mGzUjJ7pf0HHCkOhiXZmJkjRQgQ7U072MQcGJMEaN69f0AsynF', 'doctor', NULL, 'Ասլիկյան Աննա', 1, NOW()::text)
 ON CONFLICT (username) DO UPDATE SET
   password_hash = EXCLUDED.password_hash,
   role = EXCLUDED.role,
   branch = EXCLUDED.branch,
   doctor_name = EXCLUDED.doctor_name,
   active = EXCLUDED.active;
-

@@ -479,6 +479,8 @@ def init_db():
             ("Մելինա Խաչատրյան", "Բժիշկ"),
             ("Լյուբա Արզումանյան", "Բժիշկ"),
             ("Արմինե Հովհաննիսյան", "Բժիշկ"),
+            ("Մակարյան Գայանե", "Ռևմատոլոգ"),
+            ("Ասլիկյան Աննա", "Բժիշկ-լաբորանտ"),
         ]
         conn.executemany("INSERT OR IGNORE INTO doctors (name, specialty) VALUES (?,?)", doctors)
         conn.executemany("UPDATE doctors SET specialty = ? WHERE name = ? AND (specialty IS NULL OR specialty = '')", [(specialty, name) for name, specialty in doctors])
