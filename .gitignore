@@ -10,6 +10,9 @@ cloud_app/backups/
 cloud_app/.env
 .env
 
+# Local Python environment.
+cloud_app/.venv/
+
 # Editor/system noise.
 .vscode/
 .idea/
