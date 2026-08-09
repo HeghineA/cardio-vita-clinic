@@ -1667,12 +1667,83 @@ class ClinicHandler(SimpleHTTPRequestHandler):
         branch = self.scoped_branch(user, "")
         where = "WHERE branch = ?" if branch else ""
         params = [branch] if branch else []
+        today_value = date.today().isoformat()
+        week_end = (date.today() + timedelta(days=7)).isoformat()
+        month_start = date.today().replace(day=1).isoformat()
         with connect() as conn:
             patients = conn.execute(f"SELECT COUNT(*) c FROM patients {where}", params).fetchone()["c"]
             appointments = conn.execute(f"SELECT COUNT(*) c FROM appointments {where}", params).fetchone()["c"]
+            services = conn.execute(f"SELECT COUNT(*) c FROM service_orders {where}", params).fetchone()["c"]
+            holters = conn.execute(f"SELECT COUNT(*) c FROM holters {where}", params).fetchone()["c"]
+            today_patients = conn.execute(
+                f"SELECT COUNT(*) c FROM patients WHERE visit_date = ? {'AND branch = ?' if branch else ''}",
+                [today_value] + params,
+            ).fetchone()["c"]
+            today_appointments = conn.execute(
+                f"SELECT COUNT(*) c FROM appointments WHERE appointment_date = ? {'AND branch = ?' if branch else ''}",
+                [today_value] + params,
+            ).fetchone()["c"]
             service_where = "WHERE branch = ?" if branch else ""
             revenue = conn.execute(f"SELECT kind, SUM(price) total FROM service_orders {service_where} GROUP BY kind", params).fetchall()
-        self.send_json({"patients": patients, "appointments": appointments, "revenue": [dict(r) for r in revenue]})
+            month_revenue = conn.execute(
+                f"SELECT COALESCE(SUM(price), 0) c FROM service_orders WHERE substr(created_at, 1, 10) >= ? {'AND branch = ?' if branch else ''}",
+                [month_start] + params,
+            ).fetchone()["c"]
+            status_rows = conn.execute(
+                f"SELECT status, COUNT(*) count FROM appointments {where} GROUP BY status ORDER BY count DESC",
+                params,
+            ).fetchall()
+            branch_rows = conn.execute(
+                """
+                SELECT b.branch,
+                       COALESCE(p.count, 0) patients,
+                       COALESCE(a.count, 0) appointments,
+                       COALESCE(s.revenue, 0) revenue
+                FROM (SELECT 'Տերյան' branch UNION SELECT 'Նարեկացի' branch) b
+                LEFT JOIN (SELECT branch, COUNT(*) count FROM patients GROUP BY branch) p ON p.branch = b.branch
+                LEFT JOIN (SELECT branch, COUNT(*) count FROM appointments GROUP BY branch) a ON a.branch = b.branch
+                LEFT JOIN (SELECT branch, SUM(price) revenue FROM service_orders GROUP BY branch) s ON s.branch = b.branch
+                WHERE (? = '' OR b.branch = ?)
+                ORDER BY b.branch
+                """,
+                (branch or "", branch or ""),
+            ).fetchall()
+            upcoming_holters = conn.execute(
+                f"""
+                SELECT anketa_number, patient_name, branch, return_at, return_status
+                FROM holters
+                WHERE substr(return_at, 1, 10) >= ? {'AND branch = ?' if branch else ''}
+                ORDER BY return_at
+                LIMIT 6
+                """,
+                [today_value] + params,
+            ).fetchall()
+            recent_appointments = conn.execute(
+                f"""
+                SELECT appointment_date, appointment_time, branch, doctor, patient_name, status
+                FROM appointments
+                {'WHERE branch = ?' if branch else ''}
+                ORDER BY appointment_date DESC, appointment_time DESC
+                LIMIT 6
+                """,
+                params,
+            ).fetchall()
+        self.send_json({
+            "today": today_value,
+            "branch": branch,
+            "patients": patients,
+            "appointments": appointments,
+            "services": services,
+            "holters": holters,
+            "today_patients": today_patients,
+            "today_appointments": today_appointments,
+            "month_revenue": month_revenue,
+            "revenue": [dict(r) for r in revenue],
+            "by_status": [dict(r) for r in status_rows],
+            "by_branch": [dict(r) for r in branch_rows],
+            "upcoming_holters": [dict(r) for r in upcoming_holters],
+            "recent_appointments": [dict(r) for r in recent_appointments],
+        })
 
     def dashboard(self, user):
         if user["role"] != "admin":

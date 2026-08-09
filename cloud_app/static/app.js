@@ -425,13 +425,65 @@ async function loadLists() {
     { key: "status", label: "Կարգավիճակ" },
   ]);
   const revenue = Object.fromEntries(summary.revenue.map(r => [r.kind, r.total || 0]));
+  const totalRevenue = Number(revenue.general || 0) + Number(revenue.lab || 0);
+  $("#summaryMeta").textContent = `${summary.branch || "Բոլոր մասնաճյուղերը"} · Այսօր՝ ${summary.today}`;
   $("#summaryBox").innerHTML = `
-    <div class="stats">
-      <strong>${summary.patients}<span>Պացիենտներ</span></strong>
-      <strong>${summary.appointments}<span>Ժամադրություններ</span></strong>
-      <strong>${revenue.general || 0}<span>Ընդհանուր եկամուտ</span></strong>
-      <strong>${revenue.lab || 0}<span>Լաբ․ եկամուտ</span></strong>
+    <div class="summary-grid">
+      <article class="summary-card primary"><strong>${summary.today_patients}</strong><span>Այսօրվա պացիենտներ</span></article>
+      <article class="summary-card primary"><strong>${summary.today_appointments}</strong><span>Այսօրվա ժամադրություններ</span></article>
+      <article class="summary-card"><strong>${summary.patients}</strong><span>Ընդհանուր պացիենտներ</span></article>
+      <article class="summary-card"><strong>${summary.appointments}</strong><span>Ընդհանուր ժամադրություններ</span></article>
+      <article class="summary-card"><strong>${summary.services}</strong><span>Ծառայությունների քանակ</span></article>
+      <article class="summary-card"><strong>${summary.holters}</strong><span>Հոլտերներ</span></article>
+      <article class="summary-card revenue"><strong>${money(summary.month_revenue)}</strong><span>Այս ամսվա եկամուտ</span></article>
+      <article class="summary-card revenue"><strong>${money(totalRevenue)}</strong><span>Ընդհանուր եկամուտ</span></article>
+    </div>
+    <div class="summary-sections">
+      <section>
+        <h3>Եկամուտ ըստ տեսակի</h3>
+        <div class="summary-split">
+          <div><span>Ընդհանուր ծառայություններ</span><strong>${money(revenue.general)}</strong></div>
+          <div><span>Լաբորատոր ծառայություններ</span><strong>${money(revenue.lab)}</strong></div>
+        </div>
+      </section>
+      <section>
+        <h3>Մասնաճյուղեր</h3>
+        <div id="summaryBranches"></div>
+      </section>
+      <section>
+        <h3>Ժամադրությունների կարգավիճակ</h3>
+        <div id="summaryStatuses"></div>
+      </section>
+      <section>
+        <h3>Առաջիկա հոլտերներ</h3>
+        <div id="summaryHolters"></div>
+      </section>
+      <section class="wide">
+        <h3>Վերջին ժամադրություններ</h3>
+        <div id="summaryAppointments"></div>
+      </section>
     </div>`;
+  renderTable($("#summaryBranches"), summary.by_branch.map(row => ({ ...row, revenue_label: money(row.revenue) })), [
+    { key: "branch", label: "Մասնաճյուղ" },
+    { key: "patients", label: "Պացիենտ" },
+    { key: "appointments", label: "Ժամադրություն" },
+    { key: "revenue_label", label: "Եկամուտ" },
+  ], { actions: false });
+  renderBars($("#summaryStatuses"), summary.by_status, "status", "count");
+  renderTable($("#summaryHolters"), summary.upcoming_holters, [
+    { key: "anketa_number", label: "Անկետա #" },
+    { key: "patient_name", label: "Պացիենտ" },
+    { key: "return_at", label: "Վերադարձ" },
+    { key: "return_status", label: "Կարգավիճակ" },
+  ], { actions: false });
+  renderTable($("#summaryAppointments"), summary.recent_appointments, [
+    { key: "appointment_date", label: "Ամսաթիվ" },
+    { key: "appointment_time", label: "Ժամ" },
+    { key: "branch", label: "Մասնաճյուղ" },
+    { key: "doctor", label: "Բժիշկ" },
+    { key: "patient_name", label: "Պացիենտ" },
+    { key: "status", label: "Կարգավիճակ" },
+  ], { actions: false });
   if (state.user.role === "admin") {
     const users = await api("/api/users");
     renderTable($("#usersTable"), users, [

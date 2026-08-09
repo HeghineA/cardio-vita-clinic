@@ -27,6 +27,7 @@ textarea { min-height: 76px; resize: vertical; }
 .page.active { display: grid; }
 .calendar-page.active { display: block; }
 .dashboard-page.active { display: block; }
+#summary.active { display: block; }
 .panel { background: #fff; border: 1px solid #d8e4e8; border-radius: 8px; padding: 18px; overflow: auto; }
 .panel h2 { margin: 0 0 14px; font-size: 20px; }
 .patient-search-panel { max-height: calc(100vh - 132px); }
@@ -145,6 +146,25 @@ th, td { border: 1px solid #d8e4e8; padding: 9px; vertical-align: top; }
 .stats { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; }
 .stats strong { display: grid; gap: 8px; border: 1px solid #d8e4e8; border-radius: 8px; padding: 16px; color: #176b87; font-size: 26px; background: #f8fbfc; }
 .stats span { color: #607780; font-size: 14px; font-weight: 400; }
+.summary-panel { max-width: 1380px; }
+.summary-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.summary-head h2 { margin: 0; font-size: 28px; color: #17343d; }
+.summary-head span { color: #607780; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.summary-card { border: 1px solid #d8e4e8; border-left: 5px solid #9bb6c2; border-radius: 8px; padding: 16px; background: #f8fbfc; display: grid; gap: 8px; min-height: 108px; }
+.summary-card.primary { border-left-color: #176b87; background: #f1f8fb; }
+.summary-card.revenue { border-left-color: #2e9c5d; }
+.summary-card strong { color: #176b87; font-size: 28px; line-height: 1.12; overflow-wrap: anywhere; }
+.summary-card.revenue strong { color: #177245; font-size: 24px; }
+.summary-card span { color: #607780; font-size: 14px; }
+.summary-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.summary-sections section { border: 1px solid #d8e4e8; border-radius: 8px; background: #fff; padding: 14px; min-width: 0; overflow: auto; }
+.summary-sections section.wide { grid-column: 1 / -1; }
+.summary-sections h3 { margin: 0 0 12px; font-size: 18px; color: #17343d; }
+.summary-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.summary-split div { border: 1px solid #d8e4e8; border-radius: 8px; background: #f8fbfc; padding: 13px; display: grid; gap: 6px; }
+.summary-split span { color: #607780; font-size: 14px; }
+.summary-split strong { color: #176b87; font-size: 20px; }
 .modal { position: fixed; inset: 0; z-index: 20; background: rgba(23,52,61,.38); display: grid; place-items: center; padding: 18px; }
 .modal-card { width: min(760px, 100%); max-height: calc(100vh - 36px); overflow: auto; background: #fff; border-radius: 8px; border: 1px solid #d8e4e8; box-shadow: 0 22px 60px rgba(23,52,61,.24); padding: 18px; }
 .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
@@ -154,9 +174,10 @@ th, td { border: 1px solid #d8e4e8; padding: 9px; vertical-align: top; }
 .toast.show { opacity: 1; transform: translateY(0); }
 @media (max-width: 1000px) {
   .page.active { grid-template-columns: 1fr; }
-  .controls, .stats, .calendar-filters, .calendar-stats, .metric-grid, .dashboard-grid, .doctor-row, .doctor-info, .service-chip, .service-picker-head, .service-group-head, .patient-search, .detail-grid { grid-template-columns: 1fr; }
+  .controls, .stats, .summary-grid, .summary-sections, .summary-split, .calendar-filters, .calendar-stats, .metric-grid, .dashboard-grid, .doctor-row, .doctor-info, .service-chip, .service-picker-head, .service-group-head, .patient-search, .detail-grid { grid-template-columns: 1fr; }
   .service-actions { align-items: stretch; flex-direction: column; }
   .dashboard-head,
+  .summary-head,
   .modal-head,
   .calendar-toolbar { align-items: flex-start; flex-direction: column; }
   .week-actions { justify-content: flex-start; }
