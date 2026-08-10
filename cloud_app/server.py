@@ -21,7 +21,7 @@ DATA_DIR = BASE_DIR / "data"
 DB_PATH = Path(os.environ.get("CLINIC_DB", DATA_DIR / "clinic.sqlite"))
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 SESSION_COOKIE = "cardio_vita_session"
-SESSION_DAYS = 7
+SESSION_MINUTES = int(os.environ.get("SESSION_MINUTES", "15"))
 SECRET = os.environ.get("APP_SECRET", "change-this-secret-before-cloud-hosting")
 DEFAULT_SECRET = "change-this-secret-before-cloud-hosting"
 DEFAULT_ADMIN_PASSWORD = "ChangeMe2026!"
@@ -47,6 +47,10 @@ if psycopg:
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+
+def session_expires_at():
+    return (datetime.now(timezone.utc) + timedelta(minutes=SESSION_MINUTES)).isoformat()
 
 
 def sql_params(sql):
@@ -571,6 +575,8 @@ class ClinicHandler(SimpleHTTPRequestHandler):
                 """,
                 (token, now_iso()),
             ).fetchone()
+            if row:
+                conn.execute("UPDATE sessions SET expires_at = ? WHERE token = ?", (session_expires_at(), token))
         return row_dict(row)
 
     def require_user(self):
@@ -738,7 +744,7 @@ class ClinicHandler(SimpleHTTPRequestHandler):
                 self.error("Wrong username or password.", 401)
                 return
             token = secrets.token_urlsafe(32)
-            expires = (datetime.now(timezone.utc) + timedelta(days=SESSION_DAYS)).isoformat()
+            expires = session_expires_at()
             conn.execute("INSERT INTO sessions (token, user_id, expires_at) VALUES (?,?,?)", (token, user["id"], expires))
         cookie = cookies.SimpleCookie()
         cookie[SESSION_COOKIE] = sign_session(token)

@@ -1,8 +1,8 @@
 -- Cardio Vita seed users and doctors
 -- Run this after scripts/postgres_schema.sql in Supabase SQL Editor.
 --
--- Temporary password for every user below:
---   ChangeMe2026!
+-- Seeded users have separate temporary passwords.
+-- Keep the password list outside the database and ask users to change them later.
 --
 -- IMPORTANT:
 -- These password hashes are already salted/hashed by the app.
@@ -12,11 +12,11 @@
 -- They are created as role = 'staff' so each user sees only their own branch.
 -- If someone must manage the whole system, change role to 'admin' and branch to NULL.
 INSERT INTO users (username, password_hash, role, branch, doctor_name, active, created_at) VALUES
-  ('mane.barseghyan', 'jTFlRfSjB95CdPESvHsooriSiLkYz3URvLKpw5mraSj0h+u7QMdOv1NmjdxRpNdi', 'staff', 'Նարեկացի', NULL, 1, NOW()::text),
-  ('milena.ashabeyan', 'IsIyTe7L+ayq4oI8P4xfvkXD2shUm+yowKpkzruN4ptbK5vB6XASE0Q1NgWhuIXy', 'staff', 'Նարեկացի', NULL, 1, NOW()::text),
-  ('lusine.teryan', '+r/dHsCmUkofr+j3cnfuENu+ZmODVq2NG9GBlJaq2Kw1qA8ahloby25NAE8y5BYa', 'staff', 'Տերյան', NULL, 1, NOW()::text),
-  ('siranush.teryan', '9M0CjLvjVhvoQbQT6rL3iHAmP83JVxn/Ot6JFw9wK/T2FjGBGM3cx41fMyAGw5od', 'staff', 'Տերյան', NULL, 1, NOW()::text),
-  ('gohar.teryan', '4z9Vh3VO6LiYLDMY0XVfTt9j0A955Sw1rJ9SC5y/KJpKzcghuFmwMYYesPUQ3X7/', 'staff', 'Տերյան', NULL, 1, NOW()::text)
+  ('mane.barseghyan', 'gR7orS5WCfLXkdrYo6qklbslUHudrAZO4Fp9b+WVyIZp0v7XZ/A6dkHAtU0Fp5vb', 'staff', 'Նարեկացի', NULL, 1, NOW()::text),
+  ('milena.ashabeyan', 'Mp4XlqWTBTh5NW378ptkz81bnq7Z/g3X3vBWIJeiTn4FnJ77Q1hglyGGpbomfWL3', 'staff', 'Նարեկացի', NULL, 1, NOW()::text),
+  ('lusine.teryan', 's57a2Rz2CVkqvHAOqmHAyqNzkr8ht91k5pkYjeL8pQxZoCH2YhH6TbZwkEHGBFJb', 'staff', 'Տերյան', NULL, 1, NOW()::text),
+  ('siranush.teryan', 'KYucFN/b8NBR99Nx0tp9vEcGcASe4ow20UJxXdlvY8PGB1fVbEHWw/mdfrm5pLNR', 'staff', 'Տերյան', NULL, 1, NOW()::text),
+  ('gohar.teryan', 'NtuFUhygVMJ2aijyORHDP1CG7yB5tFzlpyXkuO5+TqrWXQLe6EMghb7FsKmj0kW6', 'staff', 'Տերյան', NULL, 1, NOW()::text)
 ON CONFLICT (username) DO UPDATE SET
   password_hash = EXCLUDED.password_hash,
   role = EXCLUDED.role,
@@ -42,16 +42,16 @@ ON CONFLICT (name) DO UPDATE SET
 
 -- Doctor login users.
 INSERT INTO users (username, password_hash, role, branch, doctor_name, active, created_at) VALUES
-  ('azniv.gevorgyan', 'PR5MoHAqAlWVYH5BUFoMMV3Wxn02p9ltjV5gGctcOe0gNcvqgd7cN7cROB2/ASlB', 'doctor', NULL, 'Ազնիվ Գևորգյան', 1, NOW()::text),
-  ('alla.abovyan', 'XxfclYb4ITH7PGc4qd2A/Xc2XGs9Oeh2///TOiDdtxqmTLomKRD28d1YeUri/Qj4', 'doctor', NULL, 'Ալլա Աբովյան', 1, NOW()::text),
-  ('siranush.grigoryan', '3W2NCUdR9ExI6MpxB0vpsszBcWF8hXp0FjlAU74+ji5TR1oqQ16ZPwvzk9kx4NYP', 'doctor', NULL, 'Սիրանուշ Գրիգորյան', 1, NOW()::text),
-  ('sofya.khachatryan', 'A42zAu4Ik4hVwrFcx1zQHITwu+f6NWc/ytkidSn8ZMzLqxGOhoeELiPfkDEACkkU', 'doctor', NULL, 'Սոֆյա Խաչատրյան', 1, NOW()::text),
-  ('melina.khachatryan', 'h6VNT1JYd92T5w9Ir/L3IfKSsfw3LWqHd1IBueW3oySRCTED6JaLVy8+SnVpZKYj', 'doctor', NULL, 'Մելինա Խաչատրյան', 1, NOW()::text),
-  ('lyuba.arzumanyan', 'qVnRqAah8zBucQ2AHs0EBwjjn+scofR5iHXnrI8q4Q0S2+MOWbkE9tbQsdDtWVsJ', 'doctor', NULL, 'Լյուբա Արզումանյան', 1, NOW()::text),
-  ('bakur.vardanyan', '7J7kDhMN/a4xKAr+GZXL7YriGYGSemUQSe5Jj7jjJcEJrDknK6KyvEs8jJXoWyqF', 'doctor', NULL, 'Բակուր Վարդանյան', 1, NOW()::text),
-  ('armen.shahbazyan', 'qKKj3j7lDRlFxT1m3KOUG1rv5flkm45ryYaYR3d0EPfA6qsjnzaCbi5v9SXXZuG/', 'doctor', NULL, 'Արմեն Շահբազյան', 1, NOW()::text),
-  ('gayane.makaryan', 'divAQqQOZi8f/+LB/cRfw5PEF9koFqtXGyFY1DWBvsX2jPXLffRwIStvKsY3BfLK', 'doctor', NULL, 'Մակարյան Գայանե', 1, NOW()::text),
-  ('anna.aslikyan', 'xpsnrKjdGz0Q17mGzUjJ7pf0HHCkOhiXZmJkjRQgQ7U072MQcGJMEaN69f0AsynF', 'doctor', NULL, 'Ասլիկյան Աննա', 1, NOW()::text)
+  ('azniv.gevorgyan', 'Td0gSh3+Yrv9g3n0qjImjJtYePiDph/XXKkIHckx2hWLdOcgmE0ti1wsJ2jlm6pw', 'doctor', NULL, 'Ազնիվ Գևորգյան', 1, NOW()::text),
+  ('alla.abovyan', 'a7V6h5s2Tq52cTEvE9fUNwiR9Jywi/XZ1uo64+aGdStqAv/ypx5AuzWQ+0Q6jk3E', 'doctor', NULL, 'Ալլա Աբովյան', 1, NOW()::text),
+  ('siranush.grigoryan', 'iTKu/MeHoP8TF5hiNF9ZnelZZ5xXmRNxzFssk+q2ishjzXTeUrYUCnn5KXGOf/ct', 'doctor', NULL, 'Սիրանուշ Գրիգորյան', 1, NOW()::text),
+  ('sofya.khachatryan', 'ZQ3H7Es2zpkJaU8dFNLxfaCak3lylmXl721jlODe1oLoxnDTisZL8dbQu3R6zTra', 'doctor', NULL, 'Սոֆյա Խաչատրյան', 1, NOW()::text),
+  ('melina.khachatryan', 'TOiyWQMhzmU929bQoa24WQOXLh2ccH8JxIiYO2rKpAXo/w3eIBWaZVyfCG6RDFd2', 'doctor', NULL, 'Մելինա Խաչատրյան', 1, NOW()::text),
+  ('lyuba.arzumanyan', 'tA31hBYpmwRdJKRfmJByV2l51Fpa5NrpsL5gyBuWHh7m5KSOJjZEt39K5/EsT8tO', 'doctor', NULL, 'Լյուբա Արզումանյան', 1, NOW()::text),
+  ('bakur.vardanyan', 'SMHHOtSc0QvV0sbOxpGmpURRW1JPbKKwGXgu7xUrUR1W+yfh5UvAUywoZ0z6Ys1m', 'doctor', NULL, 'Բակուր Վարդանյան', 1, NOW()::text),
+  ('armen.shahbazyan', 'V1WFtotY94CA+vp4R8qBy9vUNt2z/D/0cTHY4IXw1dU9jFFd4AlJLdWC/wo5Djfk', 'doctor', NULL, 'Արմեն Շահբազյան', 1, NOW()::text),
+  ('gayane.makaryan', 'ROBVRrN1tn+c0OrYNWvCErXrmnppruzenZCqzOEW0+CaGpij53xdJ7UuM97v6P9U', 'doctor', NULL, 'Մակարյան Գայանե', 1, NOW()::text),
+  ('anna.aslikyan', 'P6UQVB3j9LoUFqTG7Ob3vngHIzxPxBPbVNAapAcxAhRnSkaPl5ybjrE4yC3p6o93', 'doctor', NULL, 'Ասլիկյան Աննա', 1, NOW()::text)
 ON CONFLICT (username) DO UPDATE SET
   password_hash = EXCLUDED.password_hash,
   role = EXCLUDED.role,
