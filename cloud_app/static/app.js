@@ -815,6 +815,29 @@ document.querySelectorAll("[data-tab]").forEach(button => button.addEventListene
   });
 });
 
+$("#passwordForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const hint = $("#passwordHint");
+  hint.textContent = "";
+  hint.className = "field-hint";
+  const data = formData(form);
+  if (data.new_password !== data.confirm_password) {
+    hint.textContent = "Նոր գաղտնաբառերը չեն համընկնում։";
+    hint.classList.add("warning");
+    return;
+  }
+  try {
+    await api("/api/change-password", { method: "POST", body: JSON.stringify(data) });
+    form.reset();
+    hint.textContent = "Գաղտնաբառը փոխվեց։ Մյուս սարքերից պետք է կրկին մուտք գործել։";
+    hint.classList.add("success");
+  } catch (error) {
+    hint.textContent = error.message;
+    hint.classList.add("warning");
+  }
+});
+
 $("#patientForm").elements.branch.addEventListener("change", () => fillNextPatientAnketa(true));
 
 $("#appointmentForm").addEventListener("submit", async (event) => {

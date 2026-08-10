@@ -38,6 +38,7 @@
         <button data-tab="patientOverview" class="admin-only">Պացիենտի պատմություն</button>
         <button data-tab="summary" class="staff-flow">Ամփոփում</button>
         <button data-tab="users" id="usersTab" class="admin-only">Օգտատերեր</button>
+        <button data-tab="account">Իմ գաղտնաբառը</button>
       </nav>
 
       <section class="page dashboard-page admin-only" id="dashboard">
@@ -260,6 +261,18 @@
           <button type="submit">Ստեղծել</button>
         </form>
         <div class="panel"><h2>Օգտատերերի ցանկ</h2><div id="usersTable"></div></div>
+      </section>
+
+      <section class="page account-page" id="account">
+        <form id="passwordForm" class="panel grid narrow-form">
+          <h2>Փոխել գաղտնաբառը</h2>
+          <p class="form-note">Մուտքագրեք ընթացիկ գաղտնաբառը և ընտրեք նոր գաղտնաբառ։</p>
+          <input name="current_password" type="password" autocomplete="current-password" placeholder="Ընթացիկ գաղտնաբառ" required>
+          <input name="new_password" type="password" autocomplete="new-password" minlength="8" placeholder="Նոր գաղտնաբառ" required>
+          <input name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Կրկնել նոր գաղտնաբառը" required>
+          <button type="submit">Պահպանել նոր գաղտնաբառը</button>
+          <small id="passwordHint" class="field-hint"></small>
+        </form>
       </section>
     </main>
     <div id="quickBookingModal" class="modal hidden" role="dialog" aria-modal="true">

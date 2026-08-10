@@ -698,6 +698,9 @@ class ClinicHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/users":
                 self.create_user(user)
                 return
+            if parsed.path == "/api/change-password":
+                self.change_password(user)
+                return
             self.error("Unknown endpoint.", 404)
         except ValueError as exc:
             self.error(str(exc))
@@ -1107,6 +1110,38 @@ class ClinicHandler(SimpleHTTPRequestHandler):
             self.send_json({"ok": True, "id": cur.lastrowid}, 201)
         except DB_INTEGRITY_ERRORS:
             self.error("Այդ օգտանունը արդեն կա։", 409)
+
+    def change_password(self, user):
+        data = self.json_body()
+        current_password = data.get("current_password", "")
+        new_password = data.get("new_password", "")
+        confirm_password = data.get("confirm_password", "")
+        if len(new_password) < 8:
+            self.error("Նոր գաղտնաբառը պետք է լինի առնվազն 8 նիշ։")
+            return
+        if new_password != confirm_password:
+            self.error("Նոր գաղտնաբառերը չեն համընկնում։")
+            return
+        if current_password == new_password:
+            self.error("Նոր գաղտնաբառը պետք է տարբերվի ընթացիկից։")
+            return
+        token = None
+        jar = cookies.SimpleCookie(self.headers.get("Cookie"))
+        morsel = jar.get(SESSION_COOKIE)
+        if morsel:
+            token = unsign_session(morsel.value)
+        with connect() as conn:
+            row = conn.execute("SELECT password_hash FROM users WHERE id = ? AND active = 1", (user["id"],)).fetchone()
+            if not row or not verify_password(current_password, row["password_hash"]):
+                self.error("Ընթացիկ գաղտնաբառը սխալ է։", 401)
+                return
+            conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(new_password), user["id"]))
+            if token:
+                conn.execute("DELETE FROM sessions WHERE user_id = ? AND token <> ?", (user["id"], token))
+            else:
+                conn.execute("DELETE FROM sessions WHERE user_id = ?", (user["id"],))
+        self.audit(user, "change_password", "users", user["id"])
+        self.send_json({"ok": True})
 
     def doctor_name_for_user(self, user):
         if user["role"] == "doctor":

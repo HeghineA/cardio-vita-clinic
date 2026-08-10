@@ -28,6 +28,7 @@ textarea { min-height: 76px; resize: vertical; }
 .calendar-page.active { display: block; }
 .dashboard-page.active { display: block; }
 #summary.active { display: block; }
+.account-page.active { display: block; }
 .panel { background: #fff; border: 1px solid #d8e4e8; border-radius: 8px; padding: 18px; overflow: auto; }
 .panel h2 { margin: 0 0 14px; font-size: 20px; }
 .patient-search-panel { max-height: calc(100vh - 132px); }
@@ -59,6 +60,9 @@ textarea { min-height: 76px; resize: vertical; }
 .doctor-note-head button { padding: 7px 11px; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .grid h2, .grid textarea, .grid button, .doctor-picker, .service-picker, .selected-services, .service-actions { grid-column: 1 / -1; }
+.narrow-form { max-width: 560px; }
+.narrow-form input, .narrow-form small, .form-note { grid-column: 1 / -1; }
+.form-note { margin: -6px 0 4px; color: #607780; }
 #doctorNoteType { grid-column: 1 / -1; min-height: 48px; }
 .doctor-picker { display: grid; gap: 8px; }
 .doctor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 10px; border: 1px solid #d8e4e8; border-radius: 8px; background: #f8fbfc; }
