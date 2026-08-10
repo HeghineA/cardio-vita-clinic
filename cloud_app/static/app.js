@@ -1,5 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 const state = { user: null, doctors: [], selectedServices: new Map() };
+const managementRoles = new Set(["admin", "manager"]);
 const resultDocumentTypes = new Set([
   "Էխոսրտագրության պատասխան",
   "Հոլտերի եզրակացություն",
@@ -94,6 +95,10 @@ function visibleServiceCatalog() {
 
 function activeServiceKind() {
   return $("#serviceForm").elements.kind.value;
+}
+
+function canManage() {
+  return managementRoles.has(state.user?.role);
 }
 
 function servicePriceLabel(price) {
@@ -193,17 +198,19 @@ function resetAppointmentDoctors() {
 
 function updateUserRoleFields() {
   const role = $("#userRole").value;
+  const hasDoctorLink = role === "doctor" || role === "manager";
   $("#userForm").elements.branch.classList.toggle("hidden", role !== "staff");
-  $("#userDoctorName").classList.toggle("hidden", role !== "doctor");
-  $("#userDoctorInfo").classList.toggle("hidden", role !== "doctor");
+  $("#userDoctorName").classList.toggle("hidden", !hasDoctorLink);
+  $("#userDoctorInfo").classList.toggle("hidden", !hasDoctorLink);
   renderUserDoctorInfo();
 }
 
 function renderUserDoctorInfo() {
   const name = $("#userDoctorName").value;
   const doctor = state.doctors.find(item => item.name === name);
-  if ($("#userRole").value !== "doctor" || !doctor) {
-    $("#userDoctorInfo").innerHTML = "<p>Ընտրեք բժիշկին։</p>";
+  const role = $("#userRole").value;
+  if ((role !== "doctor" && role !== "manager") || !doctor) {
+    $("#userDoctorInfo").innerHTML = role === "manager" ? "<p>Մենեջերի համար բժիշկը պարտադիր չէ։</p>" : "<p>Ընտրեք բժիշկին։</p>";
     return;
   }
   $("#userDoctorInfo").innerHTML = `
@@ -258,6 +265,50 @@ function renderBars(target, rows, labelKey, valueKey, suffix = "") {
     const value = Number(row[valueKey] || 0);
     return `<div class="bar-row"><span>${row[labelKey] || "Չնշված"}</span><b>${value.toLocaleString("hy-AM")}${suffix}</b><i style="--w:${Math.max(4, (value / max) * 100)}%"></i></div>`;
   }).join("")}</div>`;
+}
+
+function renderChartBars(target, rows, labelKey, valueKey, suffix = "") {
+  if (!rows.length) {
+    target.innerHTML = "<p>Դեռ տվյալ չկա։</p>";
+    return;
+  }
+  const max = maxCount(rows, valueKey);
+  target.innerHTML = `<div class="chart-bars">${rows.map(row => {
+    const value = Number(row[valueKey] || 0);
+    return `<div class="chart-bar" style="--h:${Math.max(5, (value / max) * 100)}%">
+      <i></i><strong>${value.toLocaleString("hy-AM")}${suffix}</strong><span>${row[labelKey] || "—"}</span>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function renderLineChart(target, rows, series) {
+  if (!rows.length) {
+    target.innerHTML = "<p>Դեռ տվյալ չկա։</p>";
+    return;
+  }
+  const width = 820;
+  const height = 260;
+  const pad = 34;
+  const max = Math.max(1, ...rows.flatMap(row => series.map(item => Number(row[item.key] || 0))));
+  const pointsFor = item => rows.map((row, index) => {
+    const x = pad + (index * (width - pad * 2)) / Math.max(1, rows.length - 1);
+    const y = height - pad - (Number(row[item.key] || 0) / max) * (height - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  target.innerHTML = `
+    <div class="line-chart">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Վերջին 14 օրերի ցուցանիշներ">
+        <g class="grid-lines">
+          ${[0, .25, .5, .75, 1].map(step => `<line x1="${pad}" x2="${width - pad}" y1="${height - pad - step * (height - pad * 2)}" y2="${height - pad - step * (height - pad * 2)}"></line>`).join("")}
+        </g>
+        ${series.map(item => `<polyline class="${item.className}" points="${pointsFor(item)}"></polyline>`).join("")}
+        ${rows.map((row, index) => {
+          const x = pad + (index * (width - pad * 2)) / Math.max(1, rows.length - 1);
+          return `<text x="${x}" y="${height - 8}" text-anchor="middle">${shortDate(row.date)}</text>`;
+        }).join("")}
+      </svg>
+      <div class="chart-legend">${series.map(item => `<span><b class="${item.className}"></b>${item.label}</span>`).join("")}</div>
+    </div>`;
 }
 
 function applyBranchAccess() {
@@ -443,7 +494,8 @@ async function loadLists() {
     { key: "price", label: "Գին" },
     { key: "status", label: "Կարգավիճակ" },
   ]);
-  const revenue = Object.fromEntries(summary.revenue.map(r => [r.kind, r.total || 0]));
+  const showFinance = Boolean(summary.can_view_finance);
+  const revenue = Object.fromEntries((summary.revenue || []).map(r => [r.kind, r.total || 0]));
   const totalRevenue = Number(revenue.general || 0) + Number(revenue.lab || 0);
   $("#summaryMeta").textContent = `${summary.branch || "Բոլոր մասնաճյուղերը"} · Այսօր՝ ${summary.today}`;
   $("#summaryBox").innerHTML = `
@@ -454,17 +506,17 @@ async function loadLists() {
       <article class="summary-card"><strong>${summary.appointments}</strong><span>Ընդհանուր ժամադրություններ</span></article>
       <article class="summary-card"><strong>${summary.services}</strong><span>Ծառայությունների քանակ</span></article>
       <article class="summary-card"><strong>${summary.holters}</strong><span>Հոլտերներ</span></article>
-      <article class="summary-card revenue"><strong>${money(summary.month_revenue)}</strong><span>Այս ամսվա եկամուտ</span></article>
-      <article class="summary-card revenue"><strong>${money(totalRevenue)}</strong><span>Ընդհանուր եկամուտ</span></article>
+      ${showFinance ? `<article class="summary-card revenue"><strong>${money(summary.month_revenue)}</strong><span>Այս ամսվա եկամուտ</span></article>
+      <article class="summary-card revenue"><strong>${money(totalRevenue)}</strong><span>Ընդհանուր եկամուտ</span></article>` : ""}
     </div>
     <div class="summary-sections">
-      <section>
+      ${showFinance ? `<section>
         <h3>Եկամուտ ըստ տեսակի</h3>
         <div class="summary-split">
           <div><span>Ընդհանուր ծառայություններ</span><strong>${money(revenue.general)}</strong></div>
           <div><span>Լաբորատոր ծառայություններ</span><strong>${money(revenue.lab)}</strong></div>
         </div>
-      </section>
+      </section>` : ""}
       <section>
         <h3>Մասնաճյուղեր</h3>
         <div id="summaryBranches"></div>
@@ -482,12 +534,13 @@ async function loadLists() {
         <div id="summaryAppointments"></div>
       </section>
     </div>`;
-  renderTable($("#summaryBranches"), summary.by_branch.map(row => ({ ...row, revenue_label: money(row.revenue) })), [
+  const branchColumns = [
     { key: "branch", label: "Մասնաճյուղ" },
     { key: "patients", label: "Պացիենտ" },
     { key: "appointments", label: "Ժամադրություն" },
-    { key: "revenue_label", label: "Եկամուտ" },
-  ], { actions: false });
+  ];
+  if (showFinance) branchColumns.push({ key: "revenue_label", label: "Եկամուտ" });
+  renderTable($("#summaryBranches"), summary.by_branch.map(row => ({ ...row, revenue_label: money(row.revenue) })), branchColumns, { actions: false });
   renderBars($("#summaryStatuses"), summary.by_status, "status", "count");
   renderTable($("#summaryHolters"), summary.upcoming_holters, [
     { key: "anketa_number", label: "Անկետա #" },
@@ -657,7 +710,7 @@ async function loadDoctorNotes(anketaNumber) {
 }
 
 async function loadDashboard() {
-  if (state.user?.role !== "admin") return;
+  if (!canManage()) return;
   const data = await api("/api/dashboard");
   $("#dashboardDate").textContent = `Այսօր՝ ${data.today}`;
   const cards = [
@@ -680,6 +733,15 @@ async function loadDashboard() {
     kind: row.kind === "lab" ? "Լաբորատոր" : "Ընդհանուր",
     revenue: row.revenue,
   })), "kind", "revenue", " դր");
+  renderLineChart($("#trendChart"), data.daily_trend || [], [
+    { key: "patients", label: "Պացիենտներ", className: "series-patients" },
+    { key: "appointments", label: "Ժամադրություններ", className: "series-appointments" },
+  ]);
+  renderChartBars($("#branchRevenueChart"), data.by_branch, "branch", "revenue", " դր");
+  renderChartBars($("#serviceCountChart"), data.by_service.map(row => ({
+    kind: row.kind === "lab" ? "Լաբորատոր" : "Ընդհանուր",
+    count: row.count,
+  })), "kind", "count");
   renderTable($("#holterMetrics"), data.upcoming_holters, [
     { key: "anketa_number", label: "Անկետա #" },
     { key: "return_at", label: "Վերադարձ" },
@@ -745,7 +807,9 @@ async function init() {
   $("#app").classList.remove("hidden");
   $("#userLabel").textContent = `${me.user.username} ${me.user.doctor_name || me.user.branch || "բոլոր մասնաճյուղերը"}`;
   document.querySelectorAll(".admin-only").forEach(el => el.classList.toggle("hidden", me.user.role !== "admin"));
-  document.querySelectorAll(".doctor-only").forEach(el => el.classList.toggle("hidden", me.user.role !== "doctor"));
+  document.querySelectorAll(".management-only").forEach(el => el.classList.toggle("hidden", !managementRoles.has(me.user.role)));
+  const hasDoctorWorkspace = me.user.role === "doctor" || (me.user.role === "manager" && me.user.doctor_name);
+  document.querySelectorAll(".doctor-only").forEach(el => el.classList.toggle("hidden", !hasDoctorWorkspace));
   document.querySelectorAll(".staff-flow").forEach(el => el.classList.toggle("hidden", me.user.role === "doctor"));
   applyBranchAccess();
   setDefaultDates();
@@ -757,12 +821,12 @@ async function init() {
     await loadCalendar();
     return;
   }
-  activateTab(me.user.role === "admin" ? "dashboard" : "patients");
+  activateTab(managementRoles.has(me.user.role) ? "dashboard" : "patients");
   $("#calendarWeek").value = monday(today());
   await fillNextPatientAnketa();
   resetServicePicker();
   await loadLists();
-  if (me.user.role === "admin") await loadDashboard();
+  if (managementRoles.has(me.user.role)) await loadDashboard();
   await loadCalendar();
 }
 

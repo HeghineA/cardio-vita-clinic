@@ -42,7 +42,7 @@ ON CONFLICT (name) DO UPDATE SET
 
 -- Doctor login users.
 INSERT INTO users (username, password_hash, role, branch, doctor_name, active, created_at) VALUES
-  ('azniv.gevorgyan', 'Td0gSh3+Yrv9g3n0qjImjJtYePiDph/XXKkIHckx2hWLdOcgmE0ti1wsJ2jlm6pw', 'doctor', NULL, 'Ազնիվ Գևորգյան', 1, NOW()::text),
+  ('azniv.gevorgyan', 'Td0gSh3+Yrv9g3n0qjImjJtYePiDph/XXKkIHckx2hWLdOcgmE0ti1wsJ2jlm6pw', 'manager', NULL, 'Ազնիվ Գևորգյան', 1, NOW()::text),
   ('alla.abovyan', 'a7V6h5s2Tq52cTEvE9fUNwiR9Jywi/XZ1uo64+aGdStqAv/ypx5AuzWQ+0Q6jk3E', 'doctor', NULL, 'Ալլա Աբովյան', 1, NOW()::text),
   ('siranush.grigoryan', 'iTKu/MeHoP8TF5hiNF9ZnelZZ5xXmRNxzFssk+q2ishjzXTeUrYUCnn5KXGOf/ct', 'doctor', NULL, 'Սիրանուշ Գրիգորյան', 1, NOW()::text),
   ('sofya.khachatryan', 'ZQ3H7Es2zpkJaU8dFNLxfaCak3lylmXl721jlODe1oLoxnDTisZL8dbQu3R6zTra', 'doctor', NULL, 'Սոֆյա Խաչատրյան', 1, NOW()::text),

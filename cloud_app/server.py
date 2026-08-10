@@ -32,6 +32,7 @@ BRANCHES = {"Տերյան", "Նարեկացի"}
 BRANCH_PREFIXES = {"Տերյան": "T", "Նարեկացի": "N"}
 STATUSES = {"Նշանակված", "Եկել է", "Չեղարկված", "Չի եկել"}
 ID_TABLES = {"users", "patients", "appointments", "holters", "service_orders", "doctors", "audit_log", "doctor_notes"}
+MANAGEMENT_ROLES = {"admin", "manager"}
 
 try:
     import psycopg
@@ -247,6 +248,12 @@ def ensure_sessions_reference_users(conn):
     )
 
 
+def ensure_users_support_manager(conn):
+    if DATABASE_URL:
+        conn.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check")
+        conn.execute("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'manager', 'staff', 'doctor'))")
+
+
 def ensure_doctor_notes_reference_users(conn):
     row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'doctor_notes'").fetchone()
     if not row or "users_old" not in row["sql"]:
@@ -451,6 +458,7 @@ def init_db():
         ensure_users_support_doctors(conn)
         ensure_sessions_reference_users(conn)
         ensure_doctor_notes_reference_users(conn)
+        ensure_users_support_manager(conn)
         ensure_column(conn, "users", "doctor_name", "TEXT")
         ensure_column(conn, "doctors", "specialty", "TEXT")
         ensure_column(conn, "doctor_notes", "note_type", "TEXT NOT NULL DEFAULT 'Ախտորոշում'")
@@ -780,7 +788,7 @@ class ClinicHandler(SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps({"ok": True}, ensure_ascii=False).encode("utf-8"))
 
     def scoped_branch(self, user, requested):
-        if user["role"] == "admin":
+        if user["role"] in MANAGEMENT_ROLES:
             return requested if requested in BRANCHES else None
         return user["branch"]
 
@@ -1084,7 +1092,7 @@ class ClinicHandler(SimpleHTTPRequestHandler):
         if not username or len(password) < 8:
             self.error("Օգտանունը պարտադիր է, գաղտնաբառը՝ առնվազն 8 նիշ։")
             return
-        if role not in {"admin", "staff", "doctor"}:
+        if role not in {"admin", "manager", "staff", "doctor"}:
             self.error("Սխալ դեր։")
             return
         if role == "staff" and branch not in BRANCHES:
@@ -1093,12 +1101,11 @@ class ClinicHandler(SimpleHTTPRequestHandler):
         if role == "doctor" and not doctor_name:
             self.error("Բժշկի օգտատիրոջ համար ընտրեք բժիշկ։")
             return
-        if role == "admin":
+        if role in MANAGEMENT_ROLES:
             branch = None
-            doctor_name = None
         if role == "doctor":
             branch = None
-        if role != "doctor":
+        if role not in {"doctor", "manager"}:
             doctor_name = None
         try:
             with connect() as conn:
@@ -1144,7 +1151,7 @@ class ClinicHandler(SimpleHTTPRequestHandler):
         self.send_json({"ok": True})
 
     def doctor_name_for_user(self, user):
-        if user["role"] == "doctor":
+        if user["role"] == "doctor" or (user["role"] == "manager" and user.get("doctor_name")):
             return user.get("doctor_name") or user.get("username")
         return None
 
@@ -1714,6 +1721,7 @@ class ClinicHandler(SimpleHTTPRequestHandler):
 
     def summary(self, user):
         branch = self.scoped_branch(user, "")
+        can_view_finance = user["role"] in MANAGEMENT_ROLES
         where = "WHERE branch = ?" if branch else ""
         params = [branch] if branch else []
         today_value = date.today().isoformat()
@@ -1732,26 +1740,31 @@ class ClinicHandler(SimpleHTTPRequestHandler):
                 f"SELECT COUNT(*) c FROM appointments WHERE appointment_date = ? {'AND branch = ?' if branch else ''}",
                 [today_value] + params,
             ).fetchone()["c"]
-            service_where = "WHERE branch = ?" if branch else ""
-            revenue = conn.execute(f"SELECT kind, SUM(price) total FROM service_orders {service_where} GROUP BY kind", params).fetchall()
-            month_revenue = conn.execute(
-                f"SELECT COALESCE(SUM(price), 0) c FROM service_orders WHERE substr(created_at, 1, 10) >= ? {'AND branch = ?' if branch else ''}",
-                [month_start] + params,
-            ).fetchone()["c"]
+            revenue = []
+            month_revenue = None
+            if can_view_finance:
+                service_where = "WHERE branch = ?" if branch else ""
+                revenue = conn.execute(f"SELECT kind, SUM(price) total FROM service_orders {service_where} GROUP BY kind", params).fetchall()
+                month_revenue = conn.execute(
+                    f"SELECT COALESCE(SUM(price), 0) c FROM service_orders WHERE substr(created_at, 1, 10) >= ? {'AND branch = ?' if branch else ''}",
+                    [month_start] + params,
+                ).fetchone()["c"]
             status_rows = conn.execute(
                 f"SELECT status, COUNT(*) count FROM appointments {where} GROUP BY status ORDER BY count DESC",
                 params,
             ).fetchall()
+            revenue_select = "COALESCE(s.revenue, 0)" if can_view_finance else "0"
+            revenue_join = "LEFT JOIN (SELECT branch, SUM(price) revenue FROM service_orders GROUP BY branch) s ON s.branch = b.branch" if can_view_finance else ""
             branch_rows = conn.execute(
-                """
+                f"""
                 SELECT b.branch,
                        COALESCE(p.count, 0) patients,
                        COALESCE(a.count, 0) appointments,
-                       COALESCE(s.revenue, 0) revenue
+                       {revenue_select} revenue
                 FROM (SELECT 'Տերյան' branch UNION SELECT 'Նարեկացի' branch) b
                 LEFT JOIN (SELECT branch, COUNT(*) count FROM patients GROUP BY branch) p ON p.branch = b.branch
                 LEFT JOIN (SELECT branch, COUNT(*) count FROM appointments GROUP BY branch) a ON a.branch = b.branch
-                LEFT JOIN (SELECT branch, SUM(price) revenue FROM service_orders GROUP BY branch) s ON s.branch = b.branch
+                {revenue_join}
                 WHERE (? = '' OR b.branch = ?)
                 ORDER BY b.branch
                 """,
@@ -1786,6 +1799,7 @@ class ClinicHandler(SimpleHTTPRequestHandler):
             "holters": holters,
             "today_patients": today_patients,
             "today_appointments": today_appointments,
+            "can_view_finance": can_view_finance,
             "month_revenue": month_revenue,
             "revenue": [dict(r) for r in revenue],
             "by_status": [dict(r) for r in status_rows],
@@ -1795,12 +1809,13 @@ class ClinicHandler(SimpleHTTPRequestHandler):
         })
 
     def dashboard(self, user):
-        if user["role"] != "admin":
-            self.error("Միայն ադմինը կարող է տեսնել վահանակը։", 403)
+        if user["role"] not in MANAGEMENT_ROLES:
+            self.error("Միայն ադմինը կամ մենեջերը կարող է տեսնել վահանակը։", 403)
             return
         today_value = date.today().isoformat()
         week_end = (date.today() + timedelta(days=7)).isoformat()
         month_start = date.today().replace(day=1).isoformat()
+        trend_start = (date.today() - timedelta(days=13)).isoformat()
         with connect() as conn:
             totals = {
                 "patients": conn.execute("SELECT COUNT(*) c FROM patients").fetchone()["c"],
@@ -1842,6 +1857,33 @@ class ClinicHandler(SimpleHTTPRequestHandler):
             by_service = [dict(r) for r in conn.execute(
                 "SELECT kind, COUNT(*) count, COALESCE(SUM(price), 0) revenue FROM service_orders GROUP BY kind ORDER BY kind"
             ).fetchall()]
+            trend_patients = {
+                r["day"]: r["count"] for r in conn.execute(
+                    "SELECT visit_date day, COUNT(*) count FROM patients WHERE visit_date >= ? GROUP BY visit_date",
+                    (trend_start,),
+                ).fetchall()
+            }
+            trend_appointments = {
+                r["day"]: r["count"] for r in conn.execute(
+                    "SELECT appointment_date day, COUNT(*) count FROM appointments WHERE appointment_date >= ? GROUP BY appointment_date",
+                    (trend_start,),
+                ).fetchall()
+            }
+            trend_revenue = {
+                r["day"]: r["revenue"] for r in conn.execute(
+                    "SELECT substr(created_at, 1, 10) day, COALESCE(SUM(price), 0) revenue FROM service_orders WHERE substr(created_at, 1, 10) >= ? GROUP BY substr(created_at, 1, 10)",
+                    (trend_start,),
+                ).fetchall()
+            }
+            daily_trend = []
+            for offset in range(14):
+                day = (date.today() - timedelta(days=13 - offset)).isoformat()
+                daily_trend.append({
+                    "date": day,
+                    "patients": trend_patients.get(day, 0),
+                    "appointments": trend_appointments.get(day, 0),
+                    "revenue": trend_revenue.get(day, 0),
+                })
             upcoming_holters = [dict(r) for r in conn.execute(
                 """
                 SELECT anketa_number, return_at, return_status
@@ -1867,6 +1909,7 @@ class ClinicHandler(SimpleHTTPRequestHandler):
             "by_status": by_status,
             "by_doctor": by_doctor,
             "by_service": by_service,
+            "daily_trend": daily_trend,
             "upcoming_holters": upcoming_holters,
             "recent_appointments": recent_appointments,
         })

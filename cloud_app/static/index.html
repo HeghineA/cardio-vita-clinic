@@ -28,7 +28,7 @@
       </header>
 
       <nav class="tabs">
-        <button data-tab="dashboard" class="admin-only">Վահանակ</button>
+        <button data-tab="dashboard" class="management-only">Վահանակ</button>
         <button data-tab="patients" class="active staff-flow">Պացիենտներ</button>
         <button data-tab="appointments" class="staff-flow">Ժամադրություններ</button>
         <button data-tab="calendar">Օրացույց</button>
@@ -41,7 +41,7 @@
         <button data-tab="account">Իմ գաղտնաբառը</button>
       </nav>
 
-      <section class="page dashboard-page admin-only" id="dashboard">
+      <section class="page dashboard-page management-only" id="dashboard">
         <div class="dashboard-head">
           <div>
             <h2>Վահանակ</h2>
@@ -55,6 +55,9 @@
           <section class="panel"><h2>Ժամադրությունների կարգավիճակ</h2><div id="statusMetrics"></div></section>
           <section class="panel"><h2>Բժիշկների ծանրաբեռնվածություն</h2><div id="doctorMetrics"></div></section>
           <section class="panel"><h2>Ծառայությունների եկամուտ</h2><div id="serviceMetrics"></div></section>
+          <section class="panel wide"><h2>Վերջին 14 օրերի շարժ</h2><div id="trendChart"></div></section>
+          <section class="panel"><h2>Եկամուտ ըստ մասնաճյուղի</h2><div id="branchRevenueChart"></div></section>
+          <section class="panel"><h2>Ծառայությունների քանակ</h2><div id="serviceCountChart"></div></section>
           <section class="panel"><h2>Հոլտերի վերադարձներ</h2><div id="holterMetrics"></div></section>
           <section class="panel"><h2>Վերջին ժամադրություններ</h2><div id="recentAppointments"></div></section>
         </div>
@@ -254,7 +257,7 @@
           <h2>Նոր օգտատեր</h2>
           <input name="username" placeholder="Օգտանուն" required>
           <input name="password" type="password" minlength="8" placeholder="Գաղտնաբառ" required>
-          <select name="role" id="userRole"><option value="staff">Աշխատակից</option><option value="doctor">Բժիշկ</option><option value="admin">Ադմին</option></select>
+          <select name="role" id="userRole"><option value="staff">Աշխատակից</option><option value="doctor">Բժիշկ</option><option value="manager">Մենեջեր</option><option value="admin">Ադմին</option></select>
           <select name="branch"><option>Տերյան</option><option>Նարեկացի</option></select>
           <select name="doctor_name" id="userDoctorName"></select>
           <div id="userDoctorInfo" class="doctor-info hidden"></div>

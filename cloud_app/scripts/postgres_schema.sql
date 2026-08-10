@@ -5,12 +5,15 @@ CREATE TABLE IF NOT EXISTS users (
   id BIGSERIAL PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'staff', 'doctor')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'staff', 'doctor')),
   branch TEXT,
   doctor_name TEXT,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL
 );
+
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'manager', 'staff', 'doctor'));
 
 CREATE TABLE IF NOT EXISTS sessions (
   token TEXT PRIMARY KEY,

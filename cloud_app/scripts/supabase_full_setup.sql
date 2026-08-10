@@ -14,12 +14,15 @@ CREATE TABLE IF NOT EXISTS users (
   id BIGSERIAL PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'staff', 'doctor')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'staff', 'doctor')),
   branch TEXT,
   doctor_name TEXT,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL
 );
+
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'manager', 'staff', 'doctor'));
 
 CREATE TABLE IF NOT EXISTS sessions (
   token TEXT PRIMARY KEY,
@@ -178,7 +181,7 @@ ON CONFLICT (name) DO UPDATE SET
 
 -- Doctor login users.
 INSERT INTO users (username, password_hash, role, branch, doctor_name, active, created_at) VALUES
-  ('azniv.gevorgyan', 'Td0gSh3+Yrv9g3n0qjImjJtYePiDph/XXKkIHckx2hWLdOcgmE0ti1wsJ2jlm6pw', 'doctor', NULL, 'Ազնիվ Գևորգյան', 1, NOW()::text),
+  ('azniv.gevorgyan', 'Td0gSh3+Yrv9g3n0qjImjJtYePiDph/XXKkIHckx2hWLdOcgmE0ti1wsJ2jlm6pw', 'manager', NULL, 'Ազնիվ Գևորգյան', 1, NOW()::text),
   ('alla.abovyan', 'a7V6h5s2Tq52cTEvE9fUNwiR9Jywi/XZ1uo64+aGdStqAv/ypx5AuzWQ+0Q6jk3E', 'doctor', NULL, 'Ալլա Աբովյան', 1, NOW()::text),
   ('siranush.grigoryan', 'iTKu/MeHoP8TF5hiNF9ZnelZZ5xXmRNxzFssk+q2ishjzXTeUrYUCnn5KXGOf/ct', 'doctor', NULL, 'Սիրանուշ Գրիգորյան', 1, NOW()::text),
   ('sofya.khachatryan', 'ZQ3H7Es2zpkJaU8dFNLxfaCak3lylmXl721jlODe1oLoxnDTisZL8dbQu3R6zTra', 'doctor', NULL, 'Սոֆյա Խաչատրյան', 1, NOW()::text),
